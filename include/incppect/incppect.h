@@ -579,9 +579,8 @@ struct Incppect
                   curBuffer.append((char*)(&dataSize_bytes), sizeof(dataSize_bytes));
                   curBuffer.append(req.diffData.begin(), req.diffData.end());
                }
-
-               req.prevData.resize(req.curData.size());
-               std::copy(req.curData.begin(), req.curData.end(), req.prevData.begin());
+               
+               req.prevData = req.curData;
             }
          }
 
@@ -594,35 +593,35 @@ struct Incppect
                diffBuffer.clear();
 
                uint32_t typeAll = 1;
-               std::copy((char*)(&typeAll), (char*)(&typeAll) + sizeof(typeAll), std::back_inserter(diffBuffer));
+               diffBuffer.append((char*)(&typeAll), sizeof(typeAll));
 
                for (int i = 4; i < (int)curBuffer.size(); i += 4) {
-                  std::memcpy((char*)(&a), prevBuffer.data() + i, sizeof(uint32_t));
-                  std::memcpy((char*)(&b), curBuffer.data() + i, sizeof(uint32_t));
-                  a = a ^ b;
+                  std::memcpy(&a, prevBuffer.data() + i, sizeof(uint32_t));
+                  std::memcpy(&b, curBuffer.data() + i, sizeof(uint32_t));
+                  a ^= b;
                   if (a == c) {
                      ++n;
                   }
                   else {
                      if (n > 0) {
-                        std::copy((char*)(&n), (char*)(&n) + sizeof(uint32_t), std::back_inserter(diffBuffer));
-                        std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(diffBuffer));
+                        diffBuffer.append((char*)(&n), sizeof(n));
+                        diffBuffer.append((char*)(&c), sizeof(c));
                      }
                      n = 1;
                      c = a;
                   }
                }
 
-               std::copy((char*)(&n), (char*)(&n) + sizeof(uint32_t), std::back_inserter(diffBuffer));
-               std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(diffBuffer));
+               diffBuffer.append((char*)(&n), sizeof(n));
+               diffBuffer.append((char*)(&c), sizeof(c));
 
-               if ((int32_t)diffBuffer.size() > parameters.maxPayloadLength_bytes) {
+               if (int32_t(diffBuffer.size()) > parameters.maxPayloadLength_bytes) {
                   std::printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
-                            (int)diffBuffer.size(), parameters.maxPayloadLength_bytes);
+                            int(diffBuffer.size()), parameters.maxPayloadLength_bytes);
                }
 
                // compress only for message larger than 64 bytes
-               bool doCompress = diffBuffer.size() > 64;
+               const bool doCompress = diffBuffer.size() > 64;
 
                if (socketData[clientId]->ws->send({diffBuffer.data(), diffBuffer.size()}, uWS::OpCode::BINARY,
                                                   doCompress) == false) {
@@ -636,7 +635,7 @@ struct Incppect
                }
 
                // compress only for message larger than 64 bytes
-               bool doCompress = curBuffer.size() > 64;
+               const bool doCompress = curBuffer.size() > 64;
 
                if (socketData[clientId]->ws->send({curBuffer.data(), curBuffer.size()}, uWS::OpCode::BINARY,
                                                   doCompress) == false) {
@@ -645,9 +644,8 @@ struct Incppect
             }
 
             txTotal_bytes += curBuffer.size();
-
-            prevBuffer.resize(curBuffer.size());
-            std::copy(curBuffer.begin(), curBuffer.end(), prevBuffer.begin());
+            
+            prevBuffer = curBuffer;
          }
       }
    }
