@@ -6,6 +6,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <fstream>
 #include <functional>
@@ -159,8 +160,6 @@ struct Incppect
       static Incppect instance;
       return instance;
    }
-   
-   using IpAddress = uint8_t[4];
 
    struct Request
    {
@@ -181,7 +180,7 @@ struct Incppect
    {
       int64_t tConnected_ms = -1;
 
-      IpAddress ipAddress{};
+      std::array<uint8_t, 4> ipAddress{};
 
       std::vector<int32_t> lastRequests{};
       std::map<int32_t, Request> requests{};
@@ -195,8 +194,8 @@ struct Incppect
    {
       int32_t clientId = 0;
 
-      uWS::Loop* mainLoop = nullptr;
-      uWS::WebSocket<SSL, true>* ws = nullptr;
+      uWS::Loop* mainLoop{};
+      uWS::WebSocket<SSL, true>* ws{};
    };
 
    inline bool hasExt(std::string_view file, std::string_view ext)
@@ -220,6 +219,7 @@ struct Incppect
 
       typename uWS::TemplatedApp<SSL>::WebSocketBehavior wsBehaviour;
       wsBehaviour.compression = uWS::SHARED_COMPRESSOR;
+      //wsBehaviour.compression = uWS::DEDICATED_COMPRESSOR_256KB;
       wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;
       wsBehaviour.idleTimeout = parameters.tIdleTimeout_s;
       wsBehaviour.open = [&](auto* ws, auto* /*req*/) {
@@ -235,7 +235,7 @@ struct Incppect
          cd.ipAddress[2] = addressBytes[14];
          cd.ipAddress[3] = addressBytes[15];
 
-         auto sd = (PerSocketData*)ws->getUserData();
+         auto sd = static_cast<PerSocketData*>(ws->getUserData());
          sd->clientId = uniqueId;
          sd->ws = ws;
          sd->mainLoop = uWS::Loop::get();
@@ -247,21 +247,21 @@ struct Incppect
          }
 
          if (handler) {
-            handler(sd->clientId, EventType::Connect, {(const char*)cd.ipAddress, 4});
+            handler(sd->clientId, EventType::Connect, {(const char*)cd.ipAddress.data(), cd.ipAddress.size()});
          }
       };
-      wsBehaviour.message = [this](auto* ws, std::string_view message, uWS::OpCode /*opCode*/) {
+      wsBehaviour.message = [this](auto* ws, const std::string_view message, uWS::OpCode /*opCode*/) {
          rxTotal_bytes += message.size();
          if (message.size() < sizeof(int)) {
             return;
          }
 
-         int32_t type = -1;
-         std::memcpy((char*)(&type), message.data(), sizeof(type));
+         uint32_t type{};
+         std::memcpy(&type, message.data(), sizeof(type));
 
          bool doUpdate = true;
 
-         auto sd = (PerSocketData*)ws->getUserData();
+         auto sd = static_cast<PerSocketData*>(ws->getUserData());
          auto& cd = clientData[sd->clientId];
 
          switch (type) {
