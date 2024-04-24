@@ -631,7 +631,7 @@ struct Incppect
             else {
                if (int32_t(curBuffer.size()) > parameters.maxPayloadLength_bytes) {
                   std::printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
-                            (int)curBuffer.size(), parameters.maxPayloadLength_bytes);
+                            int(curBuffer.size()), parameters.maxPayloadLength_bytes);
                }
 
                // compress only for message larger than 64 bytes
