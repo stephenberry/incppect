@@ -38,9 +38,10 @@ var incppect = {
     },
 
     timestamp: function() {
-        return window.performance && window.performance.now && window.performance.timing &&
-            window.performance.timing.navigationStart ? window.performance.now() + window.performance.timing.navigationStart : Date.now();
-    },
+        return window.performance && window.performance.now
+          ? window.performance.now()
+          : Date.now();
+      },
 
     init: function() {
         var onopen = this.onopen.bind(this);
