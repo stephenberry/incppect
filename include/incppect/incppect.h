@@ -523,15 +523,9 @@ struct Incppect
                curBuffer.append((char*)(&type), sizeof(type));
 
                if (type == 0) {
-                  std::copy((char*)(&dataSize_bytes), (char*)(&dataSize_bytes) + sizeof(dataSize_bytes),
-                            std::back_inserter(curBuffer));
-                  std::copy(req.curData.begin(), req.curData.end(), std::back_inserter(curBuffer));
-                  {
-                     char v = 0;
-                     for (int i = 0; i < padding_bytes; ++i) {
-                        std::copy((char*)(&v), (char*)(&v) + sizeof(v), std::back_inserter(curBuffer));
-                     }
-                  }
+                  curBuffer.append((char*)(&dataSize_bytes), sizeof(dataSize_bytes));
+                  curBuffer.append(req.curData.begin(), req.curData.end());
+                  curBuffer.append(padding_bytes, 0);
                }
                else if (type == 1) {
                   uint32_t a = 0;
