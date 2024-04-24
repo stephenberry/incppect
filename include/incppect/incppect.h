@@ -5,19 +5,17 @@
 
 #pragma once
 
+#include <algorithm>
+#include <chrono>
+#include <fstream>
 #include <functional>
+#include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
-
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
 
 #include "App.h" // uWebSockets
 #include "common.h"
