@@ -90,9 +90,9 @@ struct Incppect
    {
       if (mainLoop != nullptr) {
          mainLoop->defer([this]() {
-            for (auto sd : socketData) {
-               if (sd.second->mainLoop != nullptr) {
-                  sd.second->mainLoop->defer([sd]() { sd.second->ws->close(); });
+            for (auto [id, socket_data] : socketData) {
+               if (socket_data->mainLoop) {
+                  socket_data->mainLoop->defer([socket_data]() { socket_data->ws->close(); });
                }
             }
             us_listen_socket_close(0, listenSocket);
@@ -309,7 +309,7 @@ struct Incppect
                return;
             }
             if (print_debug) {
-               std::printf("[incppect] received requests: %d\n", nRequests);
+               std::printf("[incppect] received requests: %d\n", int(nRequests));
             }
 
             cd.lastRequests.clear();
