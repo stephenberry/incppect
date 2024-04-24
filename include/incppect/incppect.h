@@ -503,7 +503,7 @@ struct Incppect
 
                constexpr uint32_t kPadding = 4;
 
-               int dataSize_bytes = int(req.curData.size());
+               uint32_t dataSize_bytes = uint32_t(req.curData.size());
                int padding_bytes = 0;
                {
                   int r = dataSize_bytes % kPadding;
@@ -534,49 +534,50 @@ struct Incppect
                   uint32_t n = 0;
                   req.diffData.clear();
 
-                  for (int i = 0; i < (int)req.curData.size(); i += 4) {
-                     std::memcpy((char*)(&a), req.prevData.data() + i, sizeof(uint32_t));
-                     std::memcpy((char*)(&b), req.curData.data() + i, sizeof(uint32_t));
-                     a = a ^ b;
+                  constexpr auto chunk_size = sizeof(uint32_t);
+                  for (size_t i = 0; i < req.curData.size(); i += chunk_size) {
+                     std::memcpy(&a, req.prevData.data() + i, chunk_size);
+                     std::memcpy(&b, req.curData.data() + i, chunk_size);
+                     a ^= b;
                      if (a == c) {
                         ++n;
                      }
                      else {
                         if (n > 0) {
-                           std::copy((char*)(&n), (char*)(&n) + sizeof(uint32_t), std::back_inserter(req.diffData));
-                           std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(req.diffData));
+                           req.diffData.append((char*)(&n), sizeof(n));
+                           req.diffData.append((char*)(&c), sizeof(c));
                         }
                         n = 1;
                         c = a;
                      }
                   }
 
+                  // Handling last few bytes, three or less
                   if (req.curData.size() % 4 != 0) {
                      a = 0;
                      b = 0;
-                     uint32_t i = (req.curData.size() / 4) * 4;
-                     uint32_t k = req.curData.size() - i;
-                     std::memcpy((char*)(&a), req.prevData.data() + i, k);
-                     std::memcpy((char*)(&b), req.curData.data() + i, k);
-                     a = a ^ b;
+                     const uint32_t i = uint32_t(req.curData.size()); // (req.curData.size() / 4) * 4
+                     const uint32_t k = uint32_t(req.curData.size() - i);
+                     std::memcpy(&a, req.prevData.data() + i, k);
+                     std::memcpy(&b, req.curData.data() + i, k);
+                     a ^= b;
                      if (a == c) {
                         ++n;
                      }
                      else {
-                        std::copy((char*)(&n), (char*)(&n) + sizeof(uint32_t), std::back_inserter(req.diffData));
-                        std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(req.diffData));
+                        req.diffData.append((char*)(&n), sizeof(n));
+                        req.diffData.append((char*)(&c), sizeof(c));
                         n = 1;
                         c = a;
                      }
                   }
 
-                  std::copy((char*)(&n), (char*)(&n) + sizeof(uint32_t), std::back_inserter(req.diffData));
-                  std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(req.diffData));
+                  req.diffData.append((char*)(&n), sizeof(n));
+                  req.diffData.append((char*)(&c), sizeof(c));
 
-                  dataSize_bytes = req.diffData.size();
-                  std::copy((char*)(&dataSize_bytes), (char*)(&dataSize_bytes) + sizeof(dataSize_bytes),
-                            std::back_inserter(curBuffer));
-                  std::copy(req.diffData.begin(), req.diffData.end(), std::back_inserter(curBuffer));
+                  dataSize_bytes = uint32_t(req.diffData.size());
+                  curBuffer.append((char*)(&dataSize_bytes), sizeof(dataSize_bytes));
+                  curBuffer.append(req.diffData.begin(), req.diffData.end());
                }
 
                req.prevData.resize(req.curData.size());
