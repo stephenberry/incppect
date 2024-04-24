@@ -15,6 +15,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "App.h" // uWebSockets
@@ -133,7 +134,8 @@ struct Incppect
    }
 
    // shorthand for string_view from var
-   template <typename T>
+   template <class T>
+      requires (std::is_trivially_copyable_v<std::decay_t<T>>)
    static std::string_view view(T& v)
    {
       if constexpr (std::is_same<T, std::string>::value) {
@@ -142,10 +144,11 @@ struct Incppect
       return std::string_view{(char*)(&v), sizeof(v)};
    }
 
-   template <typename T>
+   template <class T>
+      requires (std::is_trivially_copyable_v<std::decay_t<T>>)
    static std::string_view view(T&& v)
    {
-      static T t;
+      static thread_local T t;
       t = std::move(v);
       return std::string_view{(char*)(&t), sizeof(t)};
    }
@@ -281,11 +284,11 @@ struct Incppect
                   request.idxs.push_back(idx);
                }
 
-               if (pathToGetter.find(path) != pathToGetter.end()) {
+               if (const auto it = pathToGetter.find(path); it != pathToGetter.end()) {
                   if (print_debug) {
                      std::printf("[incppect] requestId = %d, path = '%s', nidxs = %d\n", requestId, path.c_str(), nidxs);
                   }
-                  request.getterId = pathToGetter[path];
+                  request.getterId = it->second;
 
                   cd.requests[requestId] = std::move(request);
                }
@@ -657,7 +660,7 @@ struct Incppect
    double txTotal_bytes = 0.0;
    double rxTotal_bytes = 0.0;
 
-   std::map<std::string, int> pathToGetter;
+   std::unordered_map<std::string, int> pathToGetter;
    std::vector<TGetter> getters;
 
    uWS::Loop* mainLoop = nullptr;
