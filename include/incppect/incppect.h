@@ -185,9 +185,9 @@ struct Incppect
       std::vector<int32_t> lastRequests{};
       std::map<int32_t, Request> requests{};
 
-      std::vector<char> curBuffer{};
-      std::vector<char> prevBuffer{};
-      std::vector<char> diffBuffer{};
+      std::string curBuffer{};
+      std::string prevBuffer{};
+      std::string diffBuffer{};
    };
 
    struct PerSocketData
@@ -519,8 +519,8 @@ struct Incppect
                   type = 1; // run-length encoding of diff
                }
 
-               std::copy((char*)(&requestId), (char*)(&requestId) + sizeof(requestId), std::back_inserter(curBuffer));
-               std::copy((char*)(&type), (char*)(&type) + sizeof(type), std::back_inserter(curBuffer));
+               curBuffer.append((char*)(&requestId), sizeof(requestId));
+               curBuffer.append((char*)(&type), sizeof(type));
 
                if (type == 0) {
                   std::copy((char*)(&dataSize_bytes), (char*)(&dataSize_bytes) + sizeof(dataSize_bytes),
