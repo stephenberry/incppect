@@ -420,8 +420,8 @@ struct Incppect
                url += "index.html";
             }
 
-            if (resources.find(url) != resources.end()) {
-               res->end(resources[url]);
+            if (const auto it = resources.find(url); it != resources.end()) {
+               res->end(it->second);
                return;
             }
 
