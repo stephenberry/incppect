@@ -58,6 +58,13 @@ struct Incppect
 
    Incppect();
    ~Incppect();
+   
+   static int64_t timestamp()
+   {
+      return std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch())
+         .count();
+   }
 
    // run the incppect service main loop in the current thread
    // blocking call

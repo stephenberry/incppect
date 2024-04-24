@@ -11,16 +11,6 @@
 #define my_printf(...)
 #endif
 
-namespace
-{
-   inline int64_t timestamp()
-   {
-      return std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::high_resolution_clock::now().time_since_epoch())
-         .count();
-   }
-}
-
 template <bool SSL>
 struct Incppect<SSL>::Impl
 {
@@ -89,7 +79,7 @@ struct Incppect<SSL>::Impl
          ++uniqueId;
 
          auto& cd = clientData[uniqueId];
-         cd.tConnected_ms = ::timestamp();
+         cd.tConnected_ms = timestamp();
 
          auto addressBytes = ws->getRemoteAddress();
          cd.ipAddress[0] = addressBytes[12];
@@ -169,7 +159,7 @@ struct Incppect<SSL>::Impl
                std::memcpy((char*)(&curRequest), message.data() + 4 * (i + 1), sizeof(curRequest));
                if (cd.requests.find(curRequest) != cd.requests.end()) {
                   cd.lastRequests.push_back(curRequest);
-                  cd.requests[curRequest].tLastRequested_ms = ::timestamp();
+                  cd.requests[curRequest].tLastRequested_ms = timestamp();
                   cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
                }
             }
@@ -177,7 +167,7 @@ struct Incppect<SSL>::Impl
          case 3: {
             for (auto curRequest : cd.lastRequests) {
                if (cd.requests.find(curRequest) != cd.requests.end()) {
-                  cd.requests[curRequest].tLastRequested_ms = ::timestamp();
+                  cd.requests[curRequest].tLastRequested_ms = timestamp();
                   cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
                }
             }
@@ -332,7 +322,7 @@ struct Incppect<SSL>::Impl
 
          for (auto& [requestId, req] : cd.requests) {
             auto& getter = getters[req.getterId];
-            auto tCur = ::timestamp();
+            auto tCur = timestamp();
             if (((req.tLastRequestTimeout_ms < 0 && req.tLastRequested_ms > 0) ||
                  (tCur - req.tLastRequested_ms < req.tLastRequestTimeout_ms)) &&
                 tCur - req.tLastUpdated_ms > req.tMinUpdate_ms) {
@@ -345,7 +335,7 @@ struct Incppect<SSL>::Impl
 
                const int kPadding = 4;
 
-               int dataSize_bytes = req.curData.size();
+               int dataSize_bytes = int(req.curData.size());
                int padding_bytes = 0;
                {
                   int r = dataSize_bytes % kPadding;
