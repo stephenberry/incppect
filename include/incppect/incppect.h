@@ -29,11 +29,7 @@ struct Incppect
       Custom,
    };
 
-   using TUrl = std::string;
-   using TResourceContent = std::string;
-   using TPath = std::string;
-   using TIdxs = std::vector<int>;
-   using TGetter = std::function<std::string_view(const TIdxs& idxs)>;
+   using TGetter = std::function<std::string_view(const std::vector<int>& idxs)>;
    using THandler = std::function<void(int clientId, EventType etype, std::string_view)>;
    
    bool print_debug = false;
@@ -60,10 +56,10 @@ struct Incppect
 
    Incppect()
    {
-      var("incppect.nclients", [this](const TIdxs&) { return view(socketData.size()); });
-      var("incppect.tx_total", [this](const TIdxs&) { return view(txTotal_bytes); });
-      var("incppect.rx_total", [this](const TIdxs&) { return view(rxTotal_bytes); });
-      var("incppect.ip_address[%d]", [this](const TIdxs& idxs) {
+      var("incppect.nclients", [this](const std::vector<int>&) { return view(socketData.size()); });
+      var("incppect.tx_total", [this](const std::vector<int>&) { return view(txTotal_bytes); });
+      var("incppect.rx_total", [this](const std::vector<int>&) { return view(rxTotal_bytes); });
+      var("incppect.ip_address[%d]", [this](const std::vector<int>& idxs) {
          auto it = clientData.cbegin();
          std::advance(it, idxs[0]);
          return view(it->second.ipAddress);
@@ -101,7 +97,7 @@ struct Incppect
    }
 
    // set a resource. useful for serving html/js files from within the application   
-   void setResource(const TUrl& url, const TResourceContent& content)
+   void setResource(const std::string& url, const std::string& content)
    {
       resources[url] = content;
    }
@@ -128,7 +124,7 @@ struct Incppect
    //   var("path1[%d]", [](auto idxs) { ... idxs[0] ... });
    //   var("path2[%d].foo[%d]", [](auto idxs) { ... idxs[0], idxs[1] ... });
    //
-   bool var(const TPath& path, TGetter&& getter)
+   bool var(const std::string& path, TGetter&& getter)
    {
       pathToGetter[path] = getters.size();
       getters.emplace_back(std::move(getter));
@@ -170,7 +166,7 @@ struct Incppect
       int64_t tMinUpdate_ms = 16;
       int64_t tLastRequestTimeout_ms = 3000;
 
-      TIdxs idxs{};
+      std::vector<int> idxs{};
       int32_t getterId = -1;
 
       std::vector<char> prevData{};
@@ -661,7 +657,7 @@ struct Incppect
    double txTotal_bytes = 0.0;
    double rxTotal_bytes = 0.0;
 
-   std::map<TPath, int> pathToGetter;
+   std::map<std::string, int> pathToGetter;
    std::vector<TGetter> getters;
 
    uWS::Loop* mainLoop = nullptr;
@@ -669,7 +665,7 @@ struct Incppect
    std::map<int, PerSocketData*> socketData;
    std::map<int, ClientData> clientData;
 
-   std::map<TUrl, TResourceContent> resources;
+   std::map<std::string, std::string> resources;
 
    THandler handler{}; // handle input from the clients
 };
