@@ -171,8 +171,8 @@ struct Incppect
       std::vector<int> idxs{};
       int32_t getterId = -1;
 
-      std::vector<char> prevData{};
-      std::vector<char> diffData{};
+      std::string prevData{};
+      std::string diffData{};
       std::string_view curData{};
    };
 
