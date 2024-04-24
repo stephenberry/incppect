@@ -1,3 +1,2 @@
 add_executable(balls2d main.cpp)
-target_link_libraries(balls2d PRIVATE incppect)
-target_link_libraries(balls2d PRIVATE uWS)
+target_link_libraries(balls2d PRIVATE incppect::incppect)

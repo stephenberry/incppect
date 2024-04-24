@@ -20,12 +20,6 @@
 #include "App.h" // uWebSockets
 #include "common.h"
 
-#ifdef INCPPECT_DEBUG
-#define my_printf printf
-#else
-#define my_printf(...)
-#endif
-
 template <bool SSL>
 struct Incppect
 {
@@ -41,6 +35,8 @@ struct Incppect
    using TIdxs = std::vector<int>;
    using TGetter = std::function<std::string_view(const TIdxs& idxs)>;
    using THandler = std::function<void(int clientId, EventType etype, std::string_view)>;
+   
+   bool print_debug = false;
 
    // service parameters
    struct Parameters
@@ -218,7 +214,9 @@ struct Incppect
 
       {
          const char* kProtocol = SSL ? "HTTPS" : "HTTP";
-         my_printf("[incppect] running instance. serving %s from '%s'\n", kProtocol, parameters.httpRoot.c_str());
+         if (print_debug) {
+            std::printf("[incppect] running instance. serving %s from '%s'\n", kProtocol, parameters.httpRoot.c_str());
+         }
       }
 
       typename uWS::TemplatedApp<SSL>::WebSocketBehavior wsBehaviour;
@@ -245,7 +243,9 @@ struct Incppect
 
          socketData.insert({uniqueId, sd});
 
-         my_printf("[incppect] client with id = %d connected\n", sd->clientId);
+         if (print_debug) {
+            std::printf("[incppect] client with id = %d connected\n", sd->clientId);
+         }
 
          if (handler) {
             handler(sd->clientId, Connect, {(const char*)cd.ipAddress, 4});
@@ -286,23 +286,31 @@ struct Incppect
                }
 
                if (pathToGetter.find(path) != pathToGetter.end()) {
-                  my_printf("[incppect] requestId = %d, path = '%s', nidxs = %d\n", requestId, path.c_str(), nidxs);
+                  if (print_debug) {
+                     std::printf("[incppect] requestId = %d, path = '%s', nidxs = %d\n", requestId, path.c_str(), nidxs);
+                  }
                   request.getterId = pathToGetter[path];
 
                   cd.requests[requestId] = std::move(request);
                }
                else {
-                  my_printf("[incppect] missing path '%s'\n", path.c_str());
+                  if (print_debug) {
+                     std::printf("[incppect] missing path '%s'\n", path.c_str());
+                  }
                }
             }
          } break;
          case 2: {
             const auto nRequests = (message.size() - sizeof(int32_t)) / sizeof(int32_t);
             if (nRequests * sizeof(int32_t) + sizeof(int32_t) != message.size()) {
-               my_printf("[incppect] error : invalid message data!\n");
+               if (print_debug) {
+                  std::printf("[incppect] error : invalid message data!\n");
+               }
                return;
             }
-            my_printf("[incppect] received requests: %d\n", nRequests);
+            if (print_debug) {
+               std::printf("[incppect] received requests: %d\n", nRequests);
+            }
 
             cd.lastRequests.clear();
             for (size_t i = 0; i < nRequests; ++i) {
@@ -330,17 +338,21 @@ struct Incppect
             }
          } break;
          default:
-            my_printf("[incppect] unknown message type: %d\n", type);
+               if (print_debug) {
+                  std::printf("[incppect] unknown message type: %d\n", type);
+               }
          };
 
          if (doUpdate) {
             sd->mainLoop->defer([this]() { this->update(); });
          }
       };
-      wsBehaviour.drain = [](auto* ws) {
+      wsBehaviour.drain = [this](auto* ws) {
          /* Check getBufferedAmount here */
          if (ws->getBufferedAmount() > 0) {
-            my_printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
+            if (print_debug) {
+               std::printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
+            }
          }
       };
       wsBehaviour.ping = [](auto* /*ws*/) {
@@ -351,7 +363,9 @@ struct Incppect
       };
       wsBehaviour.close = [this](auto* ws, int /*code*/, std::string_view /*message*/) {
          auto sd = (PerSocketData*)ws->getUserData();
-         my_printf("[incppect] client with id = %d disconnected\n", sd->clientId);
+         if (print_debug) {
+            std::printf("[incppect] client with id = %d disconnected\n", sd->clientId);
+         }
 
          clientData.erase(sd->clientId);
          socketData.erase(sd->clientId);
@@ -376,11 +390,13 @@ struct Incppect
       }
 
       if (app->constructorFailed()) {
-         my_printf("[incppect] failed to construct uWS server!\n");
-         if (SSL) {
-            my_printf("[incppect] verify that you have valid certificate files:\n");
-            my_printf("[incppect] key  file : '%s'\n", parameters.sslKey.c_str());
-            my_printf("[incppect] cert file : '%s'\n", parameters.sslCert.c_str());
+         if (print_debug) {
+            std::printf("[incppect] failed to construct uWS server!\n");
+            if (SSL) {
+               std::printf("[incppect] verify that you have valid certificate files:\n");
+               std::printf("[incppect] key  file : '%s'\n", parameters.sslKey.c_str());
+               std::printf("[incppect] cert file : '%s'\n", parameters.sslCert.c_str());
+            }
          }
 
          return;
@@ -392,7 +408,7 @@ struct Incppect
       for (const auto& resource : parameters.resources) {
          (*app).get("/" + resource, [this](auto* res, auto* req) {
             std::string url = std::string(req->getUrl());
-            my_printf("url = '%s'\n", url.c_str());
+            std::printf("url = '%s'\n", url.c_str());
 
             if (url.size() == 0) {
                res->end("Resource not found");
@@ -408,7 +424,7 @@ struct Incppect
                return;
             }
 
-            my_printf("resource = '%s'\n", (parameters.httpRoot + url).c_str());
+            std::printf("resource = '%s'\n", (parameters.httpRoot + url).c_str());
             std::ifstream fin(parameters.httpRoot + url);
 
             if (fin.is_open() == false || fin.good() == false) {
@@ -432,7 +448,7 @@ struct Incppect
       }
       (*app).get("/*", [this](auto* res, auto* req) {
          const std::string url{req->getUrl()};
-         my_printf("url = '%s'\n", url.c_str());
+         std::printf("url = '%s'\n", url.c_str());
 
          res->end("Resource not found");
          return;
@@ -442,10 +458,10 @@ struct Incppect
                  [this](auto* token) {
                     this->listenSocket = token;
                     if (token) {
-                       my_printf("[incppect] listening on port %d\n", parameters.portListen);
+                       std::printf("[incppect] listening on port %d\n", parameters.portListen);
 
                        const char* kProtocol = SSL ? "https" : "http";
-                       my_printf("[incppect] %s://localhost:%d/\n", kProtocol, parameters.portListen);
+                       std::printf("[incppect] %s://localhost:%d/\n", kProtocol, parameters.portListen);
                     }
                  })
          .run();
@@ -455,7 +471,7 @@ struct Incppect
    {
       for (auto& [clientId, cd] : clientData) {
          if (socketData[clientId]->ws->getBufferedAmount()) {
-            my_printf(
+            std::printf(
                "[incppect] warning: buffered amount = %d, not sending updates to client %d. waiting for buffer to "
                "drain\n",
                socketData[clientId]->ws->getBufferedAmount(), clientId);
@@ -605,7 +621,7 @@ struct Incppect
                std::copy((char*)(&c), (char*)(&c) + sizeof(uint32_t), std::back_inserter(diffBuffer));
 
                if ((int32_t)diffBuffer.size() > parameters.maxPayloadLength_bytes) {
-                  my_printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
+                  std::printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
                             (int)diffBuffer.size(), parameters.maxPayloadLength_bytes);
                }
 
@@ -614,12 +630,12 @@ struct Incppect
 
                if (socketData[clientId]->ws->send({diffBuffer.data(), diffBuffer.size()}, uWS::OpCode::BINARY,
                                                   doCompress) == false) {
-                  my_printf("[incpeect] warning: backpressure for client %d increased \n", clientId);
+                  std::printf("[incpeect] warning: backpressure for client %d increased \n", clientId);
                }
             }
             else {
                if (int32_t(curBuffer.size()) > parameters.maxPayloadLength_bytes) {
-                  my_printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
+                  std::printf("[incppect] warning: buffer size (%d) exceeds maxPayloadLength (%d)\n",
                             (int)curBuffer.size(), parameters.maxPayloadLength_bytes);
                }
 
@@ -628,7 +644,7 @@ struct Incppect
 
                if (socketData[clientId]->ws->send({curBuffer.data(), curBuffer.size()}, uWS::OpCode::BINARY,
                                                   doCompress) == false) {
-                  my_printf("[incpeect] warning: backpressure for client %d increased \n", clientId);
+                  std::printf("[incpeect] warning: backpressure for client %d increased \n", clientId);
                }
             }
 

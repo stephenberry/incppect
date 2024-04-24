@@ -1,3 +1,2 @@
 add_executable(hello-browser main.cpp)
-target_link_libraries(hello-browser PRIVATE incppect)
-target_link_libraries(hello-browser PRIVATE uWS)
+target_link_libraries(hello-browser PRIVATE incppect::incppect)
