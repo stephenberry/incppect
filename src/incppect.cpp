@@ -5,16 +5,6 @@
 
 #include "incppect/incppect.h"
 
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
-
-#include "App.h" // uWebSockets
-#include "common.h"
-
 #ifdef INCPPECT_DEBUG
 #define my_printf printf
 #else

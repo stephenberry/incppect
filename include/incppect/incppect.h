@@ -12,6 +12,16 @@
 #include <thread>
 #include <vector>
 
+#include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <string>
+
+#include "App.h" // uWebSockets
+#include "common.h"
+
 template <bool SSL>
 struct Incppect
 {
