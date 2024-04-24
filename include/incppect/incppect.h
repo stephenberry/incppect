@@ -347,7 +347,7 @@ struct Incppect
          };
 
          if (doUpdate) {
-            sd->mainLoop->defer([this]() { this->update(); });
+            sd->mainLoop->defer([this]() { update(); });
          }
       };
       wsBehaviour.drain = [this](auto* ws) {
@@ -426,16 +426,17 @@ struct Incppect
             }
 
             std::printf("resource = '%s'\n", (parameters.httpRoot + url).c_str());
-            std::ifstream fin(parameters.httpRoot + url);
+            std::ifstream file(parameters.httpRoot + url);
 
-            if (fin.is_open() == false || fin.good() == false) {
+            if (file.is_open() == false || file.good() == false) {
                res->end("Resource not found");
                return;
             }
 
-            const std::string str((std::istreambuf_iterator<char>(fin)), std::istreambuf_iterator<char>());
+            // TODO: optimize
+            const std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
-            if (str.size() == 0) {
+            if (str.empty()) {
                res->end("Resource not found");
                return;
             }
@@ -448,8 +449,8 @@ struct Incppect
          });
       }
       (*app).get("/*", [this](auto* res, auto* req) {
-         const std::string url{req->getUrl()};
-         std::printf("url = '%s'\n", url.c_str());
+         const std::string_view url{req->getUrl()};
+         std::printf("url = '%.*s'\n", int(url.size()), url.data());
 
          res->end("Resource not found");
          return;
@@ -483,10 +484,9 @@ struct Incppect
          auto& prevBuffer = cd.prevBuffer;
          auto& diffBuffer = cd.diffBuffer;
 
-         curBuffer.clear();
-
          uint32_t typeAll = 0;
-         std::copy((char*)(&typeAll), (char*)(&typeAll) + sizeof(typeAll), std::back_inserter(curBuffer));
+         curBuffer.resize(sizeof(typeAll));
+         std::memcpy(curBuffer.data(), &typeAll, sizeof(typeAll));
 
          for (auto& [requestId, req] : cd.requests) {
             auto& getter = getters[req.getterId];
@@ -495,13 +495,13 @@ struct Incppect
                  (tCur - req.tLastRequested_ms < req.tLastRequestTimeout_ms)) &&
                 tCur - req.tLastUpdated_ms > req.tMinUpdate_ms) {
                if (req.tLastRequestTimeout_ms < 0) {
-                  req.tLastRequested_ms = 0;
+                  req.tLastRequested_ms = 0; // resetting last requested time
                }
 
                req.curData = getter(req.idxs);
                req.tLastUpdated_ms = tCur;
 
-               const int kPadding = 4;
+               constexpr uint32_t kPadding = 4;
 
                int dataSize_bytes = int(req.curData.size());
                int padding_bytes = 0;
@@ -515,7 +515,7 @@ struct Incppect
                }
 
                int32_t type = 0; // full update
-               if (req.prevData.size() == req.curData.size() + padding_bytes && req.curData.size() > 256) {
+               if ((req.prevData.size() == (req.curData.size() + padding_bytes)) && (req.curData.size() > 256)) {
                   type = 1; // run-length encoding of diff
                }
 
