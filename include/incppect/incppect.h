@@ -266,6 +266,8 @@ struct Incppect
 
          switch (type) {
          case 1: {
+            // Custom space delimited format parsing
+            // TODO: replace with BEVE
             std::stringstream ss(message.data() + 4);
             while (true) {
                Request request;
@@ -314,7 +316,7 @@ struct Incppect
             cd.lastRequests.clear();
             for (size_t i = 0; i < nRequests; ++i) {
                int32_t curRequest = -1;
-               std::memcpy((char*)(&curRequest), message.data() + 4 * (i + 1), sizeof(curRequest));
+               std::memcpy(&curRequest, message.data() + 4 * (i + 1), sizeof(curRequest));
                if (cd.requests.find(curRequest) != cd.requests.end()) {
                   cd.lastRequests.push_back(curRequest);
                   cd.requests[curRequest].tLastRequested_ms = timestamp();
@@ -323,6 +325,7 @@ struct Incppect
             }
          } break;
          case 3: {
+            // update time stamps
             for (auto curRequest : cd.lastRequests) {
                if (cd.requests.find(curRequest) != cd.requests.end()) {
                   cd.requests[curRequest].tLastRequested_ms = timestamp();
@@ -331,6 +334,7 @@ struct Incppect
             }
          } break;
          case 4: {
+            // Custom event
             doUpdate = false;
             if (handler && message.size() > sizeof(int32_t)) {
                handler(sd->clientId, EventType::Custom, {message.data() + sizeof(int32_t), message.size() - sizeof(int32_t)});
@@ -348,10 +352,8 @@ struct Incppect
       };
       wsBehaviour.drain = [this](auto* ws) {
          /* Check getBufferedAmount here */
-         if (ws->getBufferedAmount() > 0) {
-            if (print_debug) {
-               std::printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
-            }
+         if (print_debug && ws->getBufferedAmount() > 0) {
+            std::printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
          }
       };
       wsBehaviour.ping = [](auto* /*ws*/) {
@@ -361,7 +363,7 @@ struct Incppect
 
       };
       wsBehaviour.close = [this](auto* ws, int /*code*/, std::string_view /*message*/) {
-         auto sd = (PerSocketData*)ws->getUserData();
+         auto sd = static_cast<PerSocketData*>(ws->getUserData());
          if (print_debug) {
             std::printf("[incppect] client with id = %d disconnected\n", sd->clientId);
          }
@@ -409,12 +411,12 @@ struct Incppect
             std::string url = std::string(req->getUrl());
             std::printf("url = '%s'\n", url.c_str());
 
-            if (url.size() == 0) {
+            if (url.empty()) {
                res->end("Resource not found");
                return;
             }
 
-            if (url[url.size() - 1] == '/') {
+            if (url.back() == '/') {
                url += "index.html";
             }
 
