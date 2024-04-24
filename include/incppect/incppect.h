@@ -23,7 +23,7 @@
 template <bool SSL>
 struct Incppect
 {
-   enum EventType {
+   enum struct EventType : uint8_t {
       Connect,
       Disconnect,
       Custom,
@@ -248,7 +248,7 @@ struct Incppect
          }
 
          if (handler) {
-            handler(sd->clientId, Connect, {(const char*)cd.ipAddress, 4});
+            handler(sd->clientId, EventType::Connect, {(const char*)cd.ipAddress, 4});
          }
       };
       wsBehaviour.message = [this](auto* ws, std::string_view message, uWS::OpCode /*opCode*/) {
@@ -334,7 +334,7 @@ struct Incppect
          case 4: {
             doUpdate = false;
             if (handler && message.size() > sizeof(int32_t)) {
-               handler(sd->clientId, Custom, {message.data() + sizeof(int32_t), message.size() - sizeof(int32_t)});
+               handler(sd->clientId, EventType::Custom, {message.data() + sizeof(int32_t), message.size() - sizeof(int32_t)});
             }
          } break;
          default:
@@ -371,7 +371,7 @@ struct Incppect
          socketData.erase(sd->clientId);
 
          if (handler) {
-            handler(sd->clientId, Disconnect, {nullptr, 0});
+            handler(sd->clientId, EventType::Disconnect, {nullptr, 0});
          }
       };
 
