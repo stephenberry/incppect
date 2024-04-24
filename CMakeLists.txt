@@ -1,6 +1,12 @@
 cmake_minimum_required (VERSION 3.10)
 project(incppect)
 
+#[[ 
+  Suppress Warning for compatibility with older versions of CMake.
+  The option is clearing the variable 'INCPPECT_DEBUG'.
+#]]
+cmake_policy(SET CMP0077 NEW)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS "on")
 
 set(CMAKE_CXX_STANDARD 20)
