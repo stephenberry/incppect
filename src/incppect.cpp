@@ -156,7 +156,7 @@ struct Incppect<SSL>::Impl
             }
          } break;
          case 2: {
-            int nRequests = (message.size() - sizeof(int32_t)) / sizeof(int32_t);
+            const auto nRequests = (message.size() - sizeof(int32_t)) / sizeof(int32_t);
             if (nRequests * sizeof(int32_t) + sizeof(int32_t) != message.size()) {
                my_printf("[incppect] error : invalid message data!\n");
                return;
@@ -164,7 +164,7 @@ struct Incppect<SSL>::Impl
             my_printf("[incppect] received requests: %d\n", nRequests);
 
             cd.lastRequests.clear();
-            for (int i = 0; i < nRequests; ++i) {
+            for (size_t i = 0; i < nRequests; ++i) {
                int32_t curRequest = -1;
                std::memcpy((char*)(&curRequest), message.data() + 4 * (i + 1), sizeof(curRequest));
                if (cd.requests.find(curRequest) != cd.requests.end()) {
