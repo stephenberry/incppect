@@ -1,3 +1,5 @@
+find_uwebsockets()
+
 add_subdirectory(hello-browser)
 add_subdirectory(hello-browser-ssl)
 add_subdirectory(client-info)
