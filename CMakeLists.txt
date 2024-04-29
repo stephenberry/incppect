@@ -13,7 +13,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-include("./cmake/uwebsockets.cmake")
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+   include("./cmake/uwebsockets.cmake")
+endif()
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)

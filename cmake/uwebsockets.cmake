@@ -5,7 +5,7 @@ endif()
 
 macro(make_uwebsockets)
 
-   set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets_content-src/uSockets")
+   set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets_content-src/uSockets/src")                                                 
    set(uWebSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets_content-src")
    
    if (WIN32)
