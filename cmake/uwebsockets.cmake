@@ -6,8 +6,8 @@ endif()
 macro(make_uwebsockets)
 
    if (NOT TARGET uWS)
-      set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets_content-src/uSockets/src")                                                 
-      set(uWebSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets_content-src")
+      set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")                                                 
+      set(uWebSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src")
       
       if (WIN32)
          message("Warning: uWebSockets is not supported on Windows.")
@@ -70,23 +70,23 @@ macro(find_uwebsockets)
       if (NOT TARGET uWebSockets)
 
       FetchContent_Declare(
-         uWebSockets_content
+         uwebsockets
          GIT_REPOSITORY https://github.com/uNetworking/uWebSockets
          GIT_TAG master
          GIT_SHALLOW ON
          #GIT_SUBMODULES ""
          GIT_SUBMODULES_RECURSE YES # Get uSockets
       )
-      FetchContent_MakeAvailable(uWebSockets_content)
+      FetchContent_MakeAvailable(uwebsockets)
 
       find_package(ZLIB REQUIRED)
       add_library(uWebSockets INTERFACE)
-      target_include_directories(uWebSockets INTERFACE ${uwebsockets_content_SOURCE_DIR}/src/)
+      target_include_directories(uWebSockets INTERFACE ${uwebsockets_SOURCE_DIR}/src/)
       target_link_libraries(uWebSockets INTERFACE uSockets ${ZLIB_LIBRARIES})
       target_compile_options(uWebSockets INTERFACE -Wno-deprecated-declarations)
 
       set(uwebsockets_FOUND TRUE)
-      set(uwebsockets_INCLUDE_DIR ${uwebsockets_content_SOURCE_DIR}/src)
+      set(uwebsockets_INCLUDE_DIR ${uwebsockets_SOURCE_DIR}/src)
 
       else()
          set(uwebsockets_FOUND TRUE)
