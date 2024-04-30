@@ -5,6 +5,14 @@ endif()
 
 macro(make_uwebsockets)
    if (NOT TARGET uWS)
+   
+      if (NOT INCPPECT_NO_SSL)
+         find_package(OpenSSL REQUIRED)
+      else ()
+         unset(OPENSSL_LIBRARIES)
+         unset(OPENSSL_INCLUDE_DIR)
+      endif ()
+      
       set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
       set(uWebSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src")
 
