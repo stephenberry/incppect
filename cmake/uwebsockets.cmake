@@ -83,11 +83,12 @@ macro(find_uwebsockets)
 
       make_uwebsockets()
            
-      if (NOT EXISTS "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src/App.h")
+      if (NOT EXISTS "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src/App.h" OR (NOT EXISTS "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src/libusockets.h"))
          message(FATAL_ERROR "Required library 'https://github.com/uNetworking/uWebSockets' is missing!.")
       endif()
 
       include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src")
+      include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
         
    endif(WIN32)
 endmacro()
