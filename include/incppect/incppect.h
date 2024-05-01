@@ -212,7 +212,7 @@ namespace incppect
          // wsBehaviour.compression = uWS::DEDICATED_COMPRESSOR_256KB;
          wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;
          wsBehaviour.idleTimeout = parameters.tIdleTimeout_s;
-         wsBehaviour.open = [&](auto* ws, auto* = nullptr/*req*/) {
+         wsBehaviour.open = [&](auto* ws) {
             static int32_t uniqueId = 1;
             ++uniqueId;
 
@@ -348,10 +348,10 @@ namespace incppect
                std::printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
             }
          };
-         wsBehaviour.ping = [](auto* /*ws*/) {
+         wsBehaviour.ping = [](auto* /*ws*/, auto*) {
 
          };
-         wsBehaviour.pong = [](auto* /*ws*/) {
+         wsBehaviour.pong = [](auto* /*ws*/, auto*) {
 
          };
          wsBehaviour.close = [this](auto* ws, int /*code*/, std::string_view /*message*/) {
