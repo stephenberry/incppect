@@ -212,7 +212,7 @@ namespace incppect
          // wsBehaviour.compression = uWS::DEDICATED_COMPRESSOR_256KB;
          wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;
          wsBehaviour.idleTimeout = parameters.tIdleTimeout_s;
-         wsBehaviour.open = [&](auto* ws, auto* /*req*/) {
+         wsBehaviour.open = [&](auto* ws, auto* = nullptr/*req*/) {
             static int32_t uniqueId = 1;
             ++uniqueId;
 

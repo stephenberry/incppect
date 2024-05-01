@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
    include("./cmake/uwebsockets.cmake")
 endif()
 
@@ -33,6 +33,8 @@ find_package(ZLIB REQUIRED)
 if (APPLE)
     find_package(LibUV REQUIRED)
 endif()
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third-party/incppect/include")
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/js/incppect.js" src_incppect_js)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h @ONLY)

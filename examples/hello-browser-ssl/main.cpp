@@ -6,7 +6,7 @@
 #include "incppect/incppect.h"
 
 // using SSL
-using incppect = Incppect<true>;
+using namespace incppect;
 
 int main(int argc, char ** argv) {
 	printf("Usage: %s [port] [httpRoot]\n", argv[0]);
@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
     parameters.sslKey = "key.pem";
     parameters.sslCert = "cert.pem";
 
-    incppect::getInstance().runAsync(parameters).detach();
+    incppect::getInstance<false>().runAsync(parameters).detach();
 
     int8_t  var_int8  = 1;
     int16_t var_int16 = 2;

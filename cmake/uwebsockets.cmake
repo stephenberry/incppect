@@ -12,7 +12,7 @@ macro(make_uwebsockets)
          unset(OPENSSL_LIBRARIES)
          unset(OPENSSL_INCLUDE_DIR)
       endif ()
-      
+   
       set(uSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
       set(uWebSockets_SRC_DIR "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src")
 
@@ -23,27 +23,28 @@ macro(make_uwebsockets)
 
          # TODO: APPLE is untested...
          
-         add_library(uWS STATIC
+         add_library(uWS SHARED
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
              ${uSockets_SRC_DIR}/socket.c
              ${uSockets_SRC_DIR}/crypto/openssl.c
              ${uSockets_SRC_DIR}/eventing/libuv.c
          )
-
          target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${LIBUV_INCLUDE_DIR}" "${OPENSSL_INCLUDE_DIR}")
          target_link_libraries(uWS PRIVATE "${LIBUV_LIBRARIES}")
          target_compile_definitions(uWS PRIVATE LIBUS_USE_LIBUV=1)
+         
       elseif(UNIX)
-         add_library(uWS STATIC
+         add_library(uWS SHARED
+             ${uSockets_SRC_DIR}/bsd.c
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
              ${uSockets_SRC_DIR}/socket.c
+             ${uSockets_SRC_DIR}/crypto/sni_tree.cpp
              ${uSockets_SRC_DIR}/crypto/openssl.c
              ${uSockets_SRC_DIR}/eventing/epoll_kqueue.c
              ${uSockets_SRC_DIR}/eventing/gcd.c
          )
-
          target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${OPENSSL_INCLUDE_DIR}")
       else()
          message("Warning/TODO: ${CMAKE_SYSTEM_NAME} CMake support has not implemented for uWebSockets (ln:${CMAKE_CURRENT_LIST_LINE}).")
@@ -70,7 +71,7 @@ macro(find_uwebsockets)
          FetchContent_Declare(
             uwebsockets
             GIT_REPOSITORY https://github.com/uNetworking/uWebSockets
-            GIT_TAG master
+            GIT_TAG v20.62.0
             GIT_SHALLOW ON
             GIT_SUBMODULES_RECURSE YES # Get uSockets
          )
@@ -99,4 +100,9 @@ macro(find_uwebsockets)
       include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
         
    endif(WIN32)
+
+   if (NOT TARGET uWS)
+      install(TARGETS uWS)
+   endif()
+
 endmacro()

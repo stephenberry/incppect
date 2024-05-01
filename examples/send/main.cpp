@@ -5,7 +5,7 @@
 
 #include "incppect/incppect.h"
 
-using incppect = Incppect<false>;
+using namespace incppect;
 
 int main(int argc, char ** argv) {
 	printf("Usage: %s [port] [httpRoot]\n", argv[0]);
@@ -20,27 +20,30 @@ int main(int argc, char ** argv) {
     parameters.resources = { "", "index.html", };
 
     // handle input from the clients
-    incppect::getInstance().handler([&](int clientId, incppect::EventType etype, std::string_view data) {
+    incppect::getInstance().handler = [&](int clientId, incppect::EventType etype, std::string_view data) {
+
+        using enum incppect::EventType;
+
         switch (etype) {
-            case incppect::Connect:
+            case Connect:
                 {
                     printf("Client %d connected\n", clientId);
                 }
                 break;
-            case incppect::Disconnect:
+            case Disconnect:
                 {
                     printf("Client %d disconnected\n", clientId);
                 }
                 break;
-            case incppect::Custom:
+            case Custom:
                 {
                     printf("Client %d: '%s'\n", clientId, std::string(data.data(), data.size()).c_str());
                 }
                 break;
         };
-    });
+    };
 
-    incppect::getInstance().runAsync(parameters).detach();
+    incppect::getInstance<false>().runAsync(parameters).detach();
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

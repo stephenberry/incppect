@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstdlib>
 
-using incppect = Incppect<false>;
+using namespace incppect;
 
 inline float frand() { return (float)(rand())/RAND_MAX; }
 

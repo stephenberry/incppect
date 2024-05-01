@@ -5,7 +5,7 @@
 
 #include "incppect/incppect.h"
 
-using incppect = Incppect<false>;
+using namespace incppect;
 
 int main(int argc, char ** argv) {
 	printf("Usage: %s [port] [httpRoot]\n", argv[0]);
