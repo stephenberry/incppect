@@ -93,7 +93,7 @@ namespace incppect
       int32_t clientId = 0;
       uWS::Loop* mainLoop{};
       uWS::WebSocket<SSL, true, PerSocketData<SSL>>* ws{};
-   }
+   };
 
    // shorthand for string_view from var
    template <class T>
@@ -186,7 +186,6 @@ namespace incppect
          getters.emplace_back(std::move(getter));
          return true;
       }
-;
 
       inline bool hasExt(std::string_view file, std::string_view ext)
       {
@@ -208,7 +207,7 @@ namespace incppect
             }
          }
 
-         typename uWS::TemplatedApp<SSL>::WebSocketBehavior wsBehaviour;
+         typename uWS::TemplatedApp<SSL>::WebSocketBehavior<PerSocketData<SSL>> wsBehaviour;
          wsBehaviour.compression = uWS::SHARED_COMPRESSOR;
          // wsBehaviour.compression = uWS::DEDICATED_COMPRESSOR_256KB;
          wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;
@@ -662,7 +661,7 @@ namespace incppect
    };
 
    template <bool SSL = false>
-   inline Incppect& getInstance()
+   inline Incppect<SSL>& getInstance()
    {
       static Incppect<SSL> instance;
       return instance;
