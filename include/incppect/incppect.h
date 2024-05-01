@@ -92,7 +92,7 @@ namespace incppect
    {
       int32_t clientId = 0;
       uWS::Loop* mainLoop{};
-      uWS::WebSocket<SSL, true>* ws{};
+      uWS::WebSocket<SSL, true, PerSocketData<SSL>>* ws{};
    }
 
    // shorthand for string_view from var
@@ -252,7 +252,7 @@ namespace incppect
 
             bool doUpdate = true;
 
-            auto sd = static_cast<PerSocketData*>(ws->getUserData());
+            auto sd = static_cast<PerSocketData<SSL>*>(ws->getUserData());
             auto& cd = clientData[sd->clientId];
 
             switch (type) {
@@ -356,7 +356,7 @@ namespace incppect
 
          };
          wsBehaviour.close = [this](auto* ws, int /*code*/, std::string_view /*message*/) {
-            auto sd = static_cast<PerSocketData*>(ws->getUserData());
+            auto sd = static_cast<PerSocketData<SSL>*>(ws->getUserData());
             if (print_debug) {
                std::printf("[incppect] client with id = %d disconnected\n", sd->clientId);
             }
@@ -397,7 +397,7 @@ namespace incppect
          }
 
          (*app)
-            .template ws<PerSocketData>("/incppect", std::move(wsBehaviour))
+            .template ws<PerSocketData<SSL>>("/incppect", std::move(wsBehaviour))
             .get("/incppect.js", [](auto* res, auto* /*req*/) { res->end(kIncppect_js); });
          for (const auto& resource : parameters.resources) {
             (*app).get("/" + resource, [this](auto* res, auto* req) {
@@ -653,7 +653,7 @@ namespace incppect
 
       uWS::Loop* mainLoop = nullptr;
       us_listen_socket_t* listenSocket = nullptr;
-      std::map<int, PerSocketData*> socketData;
+      std::map<int, PerSocketData<SSL>*> socketData;
       std::map<int, ClientData> clientData;
 
       std::map<std::string, std::string> resources;
