@@ -348,10 +348,10 @@ namespace incppect
                std::printf("[incppect] drain: buffered amount = %d\n", ws->getBufferedAmount());
             }
          };
-         wsBehaviour.ping = [](auto* /*ws*/, auto*) {
+         wsBehaviour.ping = [](/*WebSocket<SSL, true, UserData> *,:*/ auto* /*ws*/, std::string_view) {
 
          };
-         wsBehaviour.pong = [](auto* /*ws*/, auto*) {
+         wsBehaviour.pong = [](/*WebSocket<SSL, true, UserData> *,:*/auto* /*ws*/, std::string_view) {
 
          };
          wsBehaviour.close = [this](auto* ws, int /*code*/, std::string_view /*message*/) {
