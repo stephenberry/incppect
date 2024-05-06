@@ -40,7 +40,7 @@ macro(make_uwebsockets)
 
          # TODO: APPLE is untested...
          
-         add_library(uWS SHARED
+         add_library(uWS STATIC
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
              ${uSockets_SRC_DIR}/socket.c
@@ -52,7 +52,7 @@ macro(make_uwebsockets)
          target_compile_definitions(uWS PRIVATE LIBUS_USE_LIBUV=1)
          
       elseif(UNIX)
-         add_library(uWS SHARED
+         add_library(uWS STATIC
              ${uSockets_SRC_DIR}/bsd.c
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
