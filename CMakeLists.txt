@@ -31,7 +31,7 @@ find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
 if (APPLE)
-    find_package(LibUV REQUIRED)
+    find_package(libuv REQUIRED)
 endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third-party/incppect/include")

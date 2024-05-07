@@ -207,7 +207,7 @@ namespace incppect
             }
          }
 
-         typename uWS::TemplatedApp<SSL>::WebSocketBehavior<PerSocketData<SSL>> wsBehaviour;
+         typename uWS::TemplatedApp<SSL>::template WebSocketBehavior<PerSocketData<SSL>> wsBehaviour;
          wsBehaviour.compression = uWS::SHARED_COMPRESSOR;
          // wsBehaviour.compression = uWS::DEDICATED_COMPRESSOR_256KB;
          wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;

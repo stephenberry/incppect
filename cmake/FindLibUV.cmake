@@ -12,7 +12,7 @@ FIND_LIBRARY(LIBUV_LIBRARIES NAMES uv libuv)
 # Handle the QUIETLY/REQUIRED arguments, set LIBUV_FOUND if all variables are
 # found
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LIBUV
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(libuv
                                   REQUIRED_VARS
                                   LIBUV_LIBRARIES
                                   LIBUV_INCLUDE_DIR)
