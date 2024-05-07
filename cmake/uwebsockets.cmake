@@ -68,7 +68,7 @@ macro(make_uwebsockets)
       endif()
 
       target_include_directories(uWS INTERFACE "${uSockets_SRC_DIR}" "${uWebSockets_SRC_DIR}")
-      target_link_libraries(uWS PUBLIC ${OPENSSL_LIBRARIES} "${ZLIB_LIBRARIES}" "${CMAKE_THREAD_LIBS_INIT}")
+      target_link_libraries(uWS PUBLIC ${LIBUV_LIBRARIES} ${OPENSSL_LIBRARIES} "${ZLIB_LIBRARIES}" "${CMAKE_THREAD_LIBS_INIT}")
 
       if (INCPPECT_NO_SSL)
          target_compile_options(uWS PRIVATE -DLIBUS_NO_SSL=1)
