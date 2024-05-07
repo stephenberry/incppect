@@ -7,6 +7,26 @@ project(incppect)
 #]]
 cmake_policy(SET CMP0077 NEW)
 
+if (MSVC)
+	# Suppress warning C4996 (deprecated declarations) for Visual Studio
+	add_compile_options(/wd4996 /wd4100 /wd4267 /wd4996)
+elseif (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG)
+	# Suppress warnings about deprecated OpenSSL functions and unused parameters for GCC and Clang
+	add_compile_options(
+	    -Wno-deprecated-declarations
+	    -Wunused-parameter
+	    -Wno-sign-compare
+	    -Wno-unused-parameter
+)
+endif()
+
+if (IMGUI_WS_ALL_WARNINGS AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+	# Enable all warnings for GCC and Clang
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+elseif (IMGUI_WS_ALL_WARNINGS)
+	message(WARNING "imgui-ws is not supported on Windows!")
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS "on")
 
 set(CMAKE_CXX_STANDARD 20)
