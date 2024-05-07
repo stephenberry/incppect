@@ -100,7 +100,7 @@ namespace incppect
       requires(std::is_trivially_copyable_v<std::decay_t<T>>)
    std::string_view view(T& v)
    {
-      if constexpr (std::is_same<T, std::string>::value) {
+      if constexpr (std::same_as<std::decay_t<T>, std::string>) {
          return std::string_view{v.data(), v.size()};
       }
       return std::string_view{(char*)(&v), sizeof(v)};
