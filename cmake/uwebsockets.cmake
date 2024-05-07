@@ -48,7 +48,6 @@ macro(make_uwebsockets)
              ${uSockets_SRC_DIR}/eventing/libuv.c
          )
          target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${LIBUV_INCLUDE_DIR}" "${OPENSSL_INCLUDE_DIR}")
-         target_link_libraries(uWS PRIVATE "${LIBUV_LIBRARIES}")
          target_compile_definitions(uWS PRIVATE LIBUS_USE_LIBUV=1)
          
       elseif(UNIX)
