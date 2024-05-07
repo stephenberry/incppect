@@ -31,7 +31,8 @@ find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
 if (APPLE)
-    find_package(libuv REQUIRED)
+    include(./cmake/FindLibUV.cmake)
+    #find_package(libuv REQUIRED)
 endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third-party/incppect/include")
@@ -52,8 +53,8 @@ target_include_directories(
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../imgui/imgui-extra>"
 )
 
-target_include_directories(incppect_incppect INTERFACE ${LIBUV_INCLUDE_DIRS})
-target_link_libraries(incppect_incppect INTERFACE uWS ${LIBUV_LIBRARIES})
+target_include_directories(incppect_incppect INTERFACE)
+target_link_libraries(incppect_incppect INTERFACE uWS)
 
 #if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory(examples)
