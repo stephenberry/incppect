@@ -52,7 +52,8 @@ target_include_directories(
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../imgui/imgui-extra>"
 )
 
-target_link_libraries(incppect_incppect INTERFACE uWS libuv)
+target_include_directories(incppect_incppect INTERFACE ${LIBUV_INCLUDE_DIRS})
+target_link_libraries(incppect_incppect INTERFACE uWS ${LIBUV_LIBRARIES})
 
 #if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory(examples)
