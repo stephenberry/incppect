@@ -32,7 +32,7 @@ find_package(ZLIB REQUIRED)
 
 if (APPLE)
     include(./cmake/FindLibUV.cmake)
-    #find_package(libuv REQUIRED)
+    find_package(libuv REQUIRED)
 endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third-party/incppect/include")

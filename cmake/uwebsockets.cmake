@@ -41,6 +41,7 @@ macro(make_uwebsockets)
          # TODO: APPLE is untested...
          
          add_library(uWS STATIC
+                 ${uSockets_SRC_DIR}/bsd.c
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
              ${uSockets_SRC_DIR}/socket.c
