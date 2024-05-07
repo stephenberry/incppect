@@ -440,7 +440,7 @@ namespace incppect
                res->end(str);
             });
          }
-         (*app).get("/*", [this](auto* res, auto* req) {
+         (*app).get("/*", [](auto* res, auto* req) {
             const std::string_view url{req->getUrl()};
             std::printf("url = '%.*s'\n", int(url.size()), url.data());
 
