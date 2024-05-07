@@ -1,2 +1,2 @@
 add_executable(send main.cpp)
-target_link_libraries(send PRIVATE uWS)
+target_link_libraries(send PRIVATE incppect::incppect)
