@@ -20,7 +20,6 @@ macro(make_uwebsockets)
 
    endif()
 
-
    if (NOT TARGET uWS)
    
       if (NOT INCPPECT_NO_SSL)
@@ -37,18 +36,14 @@ macro(make_uwebsockets)
          message("Warning: uWebSockets is not supported on Windows.")
          
       elseif (APPLE)
-
-         # TODO: APPLE is untested...
-         
          add_library(uWS STATIC
-                 ${uSockets_SRC_DIR}/bsd.c
+             ${uSockets_SRC_DIR}/bsd.c
              ${uSockets_SRC_DIR}/context.c
              ${uSockets_SRC_DIR}/loop.c
              ${uSockets_SRC_DIR}/socket.c
              ${uSockets_SRC_DIR}/crypto/openssl.c
              ${uSockets_SRC_DIR}/eventing/libuv.c
          )
-         target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${LIBUV_INCLUDE_DIR}" "${OPENSSL_INCLUDE_DIR}")
          target_compile_definitions(uWS PRIVATE LIBUS_USE_LIBUV=1)
          
       elseif(UNIX)
@@ -62,12 +57,12 @@ macro(make_uwebsockets)
              ${uSockets_SRC_DIR}/eventing/epoll_kqueue.c
              ${uSockets_SRC_DIR}/eventing/gcd.c
          )
-         target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${OPENSSL_INCLUDE_DIR}")
+
       else()
          message("Warning/TODO: ${CMAKE_SYSTEM_NAME} CMake support has not implemented for uWebSockets (ln:${CMAKE_CURRENT_LIST_LINE}).")
       endif()
 
-      target_include_directories(uWS INTERFACE "${uSockets_SRC_DIR}" "${uWebSockets_SRC_DIR}")
+      target_include_directories(uWS PRIVATE "${uSockets_SRC_DIR}" "${LIBUV_INCLUDE_DIR}" "${uWebSockets_SRC_DIR}" "${OPENSSL_INCLUDE_DIR}")
       target_link_libraries(uWS PUBLIC ${LIBUV_LIBRARIES} ${OPENSSL_LIBRARIES} "${ZLIB_LIBRARIES}" "${CMAKE_THREAD_LIBS_INIT}")
 
       if (INCPPECT_NO_SSL)
@@ -75,6 +70,7 @@ macro(make_uwebsockets)
       else()
          target_compile_options(uWS PRIVATE -DLIBUS_USE_OPENSSL=1)
       endif()
+
    endif()
 endmacro()
 
@@ -99,22 +95,19 @@ macro(find_uwebsockets)
          target_include_directories(uWebSockets INTERFACE ${uwebsockets_SOURCE_DIR}/src/)
          target_link_libraries(uWebSockets INTERFACE uSockets ${ZLIB_LIBRARIES})
          target_compile_options(uWebSockets INTERFACE -Wno-deprecated-declarations)
-
-         set(uwebsockets_FOUND TRUE)
-         set(uwebsockets_INCLUDE_DIR ${uwebsockets_SOURCE_DIR}/src)
-      else()
-         set(uwebsockets_FOUND TRUE)
-         get_target_property(uWebSockets_INCLUDE_DIR uWebSockets INTERFACE_INCLUDE_DIRECTORIES)
       endif()
+
+      set(uwebsockets_FOUND TRUE)
+      get_target_property(uWebSockets_INCLUDE_DIR uWebSockets INTERFACE_INCLUDE_DIRECTORIES)
+
+      include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src")
+      include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
 
       make_uwebsockets()
            
       if (NOT EXISTS "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src/App.h" OR (NOT EXISTS "${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src/libusockets.h"))
          message(FATAL_ERROR "Required library 'https://github.com/uNetworking/uWebSockets' is missing!.")
       endif()
-
-      include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/src")
-      include_directories("${CMAKE_BINARY_DIR}/_deps/uwebsockets-src/uSockets/src")
         
    endif(WIN32)
 

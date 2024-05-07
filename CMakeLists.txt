@@ -37,8 +37,6 @@ if(NOT PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
    include("./cmake/uwebsockets.cmake")
 endif()
 
-find_uwebsockets()
-
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
@@ -53,10 +51,12 @@ find_package(ZLIB REQUIRED)
 if (APPLE)
     include(./cmake/FindLibUV.cmake)
     find_package(libuv REQUIRED)
+    message(STATUS "libuv include directories: ${LIBUV_INCLUDE_DIRS}")
+    message(STATUS "libuv libraries: ${LIBUV_LIBRARIES}")
+    message(STATUS "libuv version: ${LIBUV_VERSION}")
 endif()
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/third-party/incppect/include")
-
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/js/incppect.js" src_incppect_js)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h @ONLY)
 
@@ -74,8 +74,12 @@ target_include_directories(
 )
 
 target_include_directories(incppect_incppect INTERFACE)
+
+find_uwebsockets()
+
 target_link_libraries(incppect_incppect INTERFACE uWS)
 
 #if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory(examples)
 #endif ()
+
