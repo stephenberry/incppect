@@ -1,35 +1,16 @@
-#pragma once
-
 /*! \file incppect.h
  *  \brief Enter description here.
  *  \author Georgi Gerganov
  */
 
-#include <algorithm>
-#include <chrono>
-#include <fstream>
+#pragma once
+
 #include <functional>
-#include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
-
-
-
-#ifdef INCPPECT_DEBUG
-#define my_printf printf
-#else
-#define my_printf(...)
-#endif
-
-namespace {
-    inline int64_t timestamp() {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-    }
-}
 
 template <bool SSL>
 class Incppect {
@@ -125,3 +106,4 @@ class Incppect {
         struct Impl;
         std::unique_ptr<Impl> m_impl;
 };
+

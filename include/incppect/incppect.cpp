@@ -2,12 +2,31 @@
  *  \brief Enter description here.
  *  \author Georgi Gerganov
  */
-#ifndef INCPPECT_HEADER_ONLY
 
 #include "incppect/incppect.h"
 
 #include "common.h"
+
 #include "App.h" // uWebSockets
+
+#include <algorithm>
+#include <chrono>
+#include <fstream>
+#include <map>
+#include <sstream>
+#include <string>
+
+#ifdef INCPPECT_DEBUG
+#define my_printf printf
+#else
+#define my_printf(...)
+#endif
+
+namespace {
+    inline int64_t timestamp() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    }
+}
 
 template <bool SSL>
 struct Incppect<SSL>::Impl {
@@ -41,9 +60,10 @@ struct Incppect<SSL>::Impl {
     };
 
     struct PerSocketData {
-     int32_t clientId = 0;
-      uWS::Loop* mainLoop{};
-      uWS::WebSocket<SSL, true, PerSocketData>* ws{};
+        int32_t clientId = 0;
+
+        uWS::Loop * mainLoop = nullptr;
+        uWS::WebSocket<SSL, true> * ws = nullptr;
     };
 
     inline bool hasExt(std::string_view file, std::string_view ext) {
@@ -61,8 +81,7 @@ struct Incppect<SSL>::Impl {
             my_printf("[incppect] running instance. serving %s from '%s'\n", kProtocol, parameters.httpRoot.c_str());
         }
 
-        //typename uWS::TemplatedApp<SSL>::WebSocketBehavior wsBehaviour;
-        typename uWS::TemplatedApp<SSL>::template WebSocketBehavior<PerSocketData> wsBehaviour;
+        typename uWS::TemplatedApp<SSL>::WebSocketBehavior wsBehaviour;
         wsBehaviour.compression = uWS::SHARED_COMPRESSOR;
         wsBehaviour.maxPayloadLength = parameters.maxPayloadLength_bytes;
         wsBehaviour.idleTimeout = parameters.tIdleTimeout_s;
@@ -556,5 +575,3 @@ void Incppect<SSL>::handler(THandler && handler) {
 
 template class Incppect<false>;
 template class Incppect<true>;
-
-#endif // INCPPECT_HEADER_ONLY
