@@ -7,6 +7,9 @@ project(incppect)
 #]]
 cmake_policy(SET CMP0077 NEW)
 
+
+option(INCPPECT_HEADER_ONLY "Use incppect header only libaries." FALSE)
+
 if (MSVC)
 	# Suppress warning C4996 (deprecated declarations) for Visual Studio
 	add_compile_options(/wd4996 /wd4100 /wd4267 /wd4996)
@@ -60,7 +63,20 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/js/incppect.js" src_incppect_js)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/incppect/common.h @ONLY)
 
-add_library(incppect_incppect INTERFACE)
+#[[
+if (INCPPECT_HEADER_ONLY)
+    message("INCPPECT_HEADER_ONLY is defined.")
+    add_definitions(-DINCPPECT_HEADER_ONLY)
+    add_library(incppect_incppect INTERFACE)
+else()
+    set(incppect_src "${PROJECT_SOURCE_DIR}/include/incppect/incppect.cpp" "${PROJECT_SOURCE_DIR}/include/incppect/incppect.h")
+    add_library(incppect_incppect STATIC "${incppect_src}")
+endif()
+#]]
+
+set(incppect_src "${PROJECT_SOURCE_DIR}/include/incppect/incppect.cpp" "${PROJECT_SOURCE_DIR}/include/incppect/incppect.h")
+add_library(incppect_incppect STATIC "${incppect_src}")
+
 add_library(incppect::incppect ALIAS incppect_incppect)
 
 set_property(TARGET incppect_incppect PROPERTY EXPORT_NAME incppect)
