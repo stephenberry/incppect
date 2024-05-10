@@ -5,48 +5,56 @@
 
 #pragma once
 
+#include <algorithm>
+#include <chrono>
+#include <fstream>
 #include <functional>
+#include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
 #include <vector>
 
+#include "common.h"
+
+namespace incppect
+{
+enum struct EventType : uint8_t {
+    Connect,
+    Disconnect,
+    Custom,
+};
+
+using TUrl = std::string;
+using TResourceContent = std::string;
+using TPath = std::string;
+using TIdxs = std::vector<int>;
+using TGetter = std::function<std::string_view(const TIdxs & idxs)>;
+using THandler = std::function<void(int clientId, EventType etype, std::string_view)>;
+
+struct Parameters {
+    int32_t portListen = 3000;
+    int32_t maxPayloadLength_bytes = 256*1024;
+    int64_t tLastRequestTimeout_ms = 3000;
+    int32_t tIdleTimeout_s = 120;
+
+    std::string httpRoot = ".";
+    std::vector<std::string> resources;
+
+    std::string sslKey = "key.pem";
+    std::string sslCert = "cert.pem";
+
+    // todo:
+    // max clients
+    // max buffered amount
+    // etc.
+};
+
 template <bool SSL>
 class Incppect {
     public:
-        enum EventType {
-            Connect,
-            Disconnect,
-            Custom,
-        };
-
-        using TUrl = std::string;
-        using TResourceContent = std::string;
-        using TPath = std::string;
-        using TIdxs = std::vector<int>;
-        using TGetter = std::function<std::string_view(const TIdxs & idxs)>;
-        using THandler = std::function<void(int clientId, EventType etype, std::string_view)>;
-
-        // service parameters
-        struct Parameters {
-            int32_t portListen = 3000;
-            int32_t maxPayloadLength_bytes = 256*1024;
-            int64_t tLastRequestTimeout_ms = 3000;
-            int32_t tIdleTimeout_s = 120;
-
-            std::string httpRoot = ".";
-            std::vector<std::string> resources;
-
-            std::string sslKey = "key.pem";
-            std::string sslCert = "cert.pem";
-
-            // todo:
-            // max clients
-            // max buffered amount
-            // etc.
-        };
-
         Incppect();
         ~Incppect();
 
@@ -101,9 +109,9 @@ class Incppect {
             static Incppect instance;
             return instance;
         }
-
     private:
         struct Impl;
         std::unique_ptr<Impl> m_impl;
 };
 
+} // namespace incppect

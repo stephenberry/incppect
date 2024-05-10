@@ -5,33 +5,25 @@
 
 #include "incppect/incppect.h"
 
-#include "common.h"
-
 #include "App.h" // uWebSockets
 
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-#include <map>
-#include <sstream>
-#include <string>
-
+namespace incppect
+{
 #ifdef INCPPECT_DEBUG
 #define my_printf printf
 #else
 #define my_printf(...)
 #endif
 
-namespace {
-    inline int64_t timestamp() {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-    }
-}
+using IpAddress = std::array<uint8_t,4>;
 
-template <bool SSL>
-struct Incppect<SSL>::Impl {
-    using IpAddress = uint8_t[4];
+template<bool SSL =false>
+    struct PerSocketData {
+        int32_t clientId = 0;
 
+        uWS::Loop * mainLoop = nullptr;
+        uWS::WebSocket<SSL, true> * ws = nullptr;
+    };
     struct Request {
         int64_t tLastUpdated_ms = -1;
         int64_t tLastRequested_ms = -1;
@@ -46,6 +38,9 @@ struct Incppect<SSL>::Impl {
         std::string_view curData;
     };
 
+    inline int64_t timestamp() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    }
     struct ClientData {
         int64_t tConnected_ms = -1;
 
@@ -59,13 +54,6 @@ struct Incppect<SSL>::Impl {
         std::vector<char> diffBuffer;
     };
 
-    struct PerSocketData {
-        int32_t clientId = 0;
-
-        uWS::Loop * mainLoop = nullptr;
-        uWS::WebSocket<SSL, true> * ws = nullptr;
-    };
-
     inline bool hasExt(std::string_view file, std::string_view ext) {
         if (ext.size() > file.size()) {
             return false;
@@ -73,7 +61,12 @@ struct Incppect<SSL>::Impl {
         return std::equal(ext.rbegin(), ext.rend(), file.rbegin());
     }
 
+template <bool SSL>
+struct Incppect<SSL>::Impl {
+
     void run() {
+
+
         mainLoop = uWS::Loop::get();
 
         {
@@ -90,7 +83,7 @@ struct Incppect<SSL>::Impl {
             ++uniqueId;
 
             auto & cd = clientData[uniqueId];
-            cd.tConnected_ms = ::timestamp();
+            cd.tConnected_ms = timestamp();
 
             auto addressBytes = ws->getRemoteAddress();
             cd.ipAddress[0] = addressBytes[12];
@@ -98,7 +91,7 @@ struct Incppect<SSL>::Impl {
             cd.ipAddress[2] = addressBytes[14];
             cd.ipAddress[3] = addressBytes[15];
 
-            auto sd = (PerSocketData *) ws->getUserData();
+            auto sd = (PerSocketData<SSL>*) ws->getUserData();
             sd->clientId = uniqueId;
             sd->ws = ws;
             sd->mainLoop = uWS::Loop::get();
@@ -108,7 +101,7 @@ struct Incppect<SSL>::Impl {
             my_printf("[incppect] client with id = %d connected\n", sd->clientId);
 
             if (handler) {
-                handler(sd->clientId, Connect, { (const char *) cd.ipAddress, 4 } );
+                handler(sd->clientId, EventType::Connect, { (const char *) cd.ipAddress.data(), cd.ipAddress.size() } );
             }
         };
         wsBehaviour.message = [this](auto * ws, std::string_view message, uWS::OpCode /*opCode*/) {
@@ -122,7 +115,7 @@ struct Incppect<SSL>::Impl {
 
             bool doUpdate = true;
 
-            auto sd = (PerSocketData *) ws->getUserData();
+            auto sd = (PerSocketData<SSL>*) ws->getUserData();
             auto & cd = clientData[sd->clientId];
 
             switch (type) {
@@ -172,7 +165,7 @@ struct Incppect<SSL>::Impl {
                             std::memcpy((char *)(&curRequest), message.data() + 4*(i + 1), sizeof(curRequest));
                             if (cd.requests.find(curRequest) != cd.requests.end()) {
                                 cd.lastRequests.push_back(curRequest);
-                                cd.requests[curRequest].tLastRequested_ms = ::timestamp();
+                                cd.requests[curRequest].tLastRequested_ms = timestamp();
                                 cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
                             }
                         }
@@ -182,7 +175,7 @@ struct Incppect<SSL>::Impl {
                     {
                         for (auto curRequest : cd.lastRequests) {
                             if (cd.requests.find(curRequest) != cd.requests.end()) {
-                                cd.requests[curRequest].tLastRequested_ms = ::timestamp();
+                                cd.requests[curRequest].tLastRequested_ms = timestamp();
                                 cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
                             }
                         }
@@ -192,7 +185,7 @@ struct Incppect<SSL>::Impl {
                     {
                         doUpdate = false;
                         if (handler && message.size() > sizeof(int32_t)) {
-                            handler(sd->clientId, Custom, { message.data() + sizeof(int32_t), message.size() - sizeof(int32_t) } );
+                            handler(sd->clientId, EventType::Custom, { message.data() + sizeof(int32_t), message.size() - sizeof(int32_t) } );
                         }
                     }
                     break;
@@ -217,14 +210,14 @@ struct Incppect<SSL>::Impl {
 
         };
         wsBehaviour.close = [this](auto * ws, int /*code*/, std::string_view /*message*/) {
-            auto sd = (PerSocketData *) ws->getUserData();
+            auto sd = (PerSocketData<SSL>*) ws->getUserData();
             my_printf("[incppect] client with id = %d disconnected\n", sd->clientId);
 
             clientData.erase(sd->clientId);
             socketData.erase(sd->clientId);
 
             if (handler) {
-                handler(sd->clientId, Disconnect, { nullptr, 0 } );
+                handler(sd->clientId, EventType::Disconnect, { nullptr, 0 } );
             }
         };
 
@@ -252,7 +245,7 @@ struct Incppect<SSL>::Impl {
             return;
         }
 
-        (*app).template ws<PerSocketData>("/incppect", std::move(wsBehaviour)
+        (*app).template ws<PerSocketData<SSL>>("/incppect", std::move(wsBehaviour)
         ).get("/incppect.js", [](auto *res, auto * /*req*/) {
                 res->end(kIncppect_js);
         });
@@ -334,7 +327,7 @@ struct Incppect<SSL>::Impl {
 
             for (auto & [requestId, req] : cd.requests) {
                 auto & getter = getters[req.getterId];
-                auto tCur = ::timestamp();
+                auto tCur = timestamp();
                 if (((req.tLastRequestTimeout_ms < 0 && req.tLastRequested_ms > 0) || (tCur - req.tLastRequested_ms < req.tLastRequestTimeout_ms)) &&
                     tCur - req.tLastUpdated_ms > req.tMinUpdate_ms) {
                     if (req.tLastRequestTimeout_ms < 0) {
@@ -499,7 +492,7 @@ struct Incppect<SSL>::Impl {
 
     uWS::Loop * mainLoop = nullptr;
     us_listen_socket_t * listenSocket = nullptr;
-    std::map<int, PerSocketData *> socketData;
+    std::map<int, PerSocketData<SSL> *> socketData;
     std::map<int, ClientData> clientData;
 
     std::map<TUrl, TResourceContent> resources;
@@ -575,3 +568,5 @@ void Incppect<SSL>::handler(THandler && handler) {
 
 template class Incppect<false>;
 template class Incppect<true>;
+
+} // incppect
