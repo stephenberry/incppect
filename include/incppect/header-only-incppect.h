@@ -243,103 +243,94 @@ namespace incppect
          wsBehaviour.message = [this](auto* ws, const std::string_view message, uWS::OpCode /*opCode*/) {
             rxTotal_bytes += message.size();
             if (message.size() < sizeof(int)) {
-               return;
+                return;
             }
 
-            uint32_t type{};
-            std::memcpy(&type, message.data(), sizeof(type));
+            int32_t type = -1;
+            std::memcpy((char *)(&type), message.data(), sizeof(type));
 
             bool doUpdate = true;
 
-            auto sd = static_cast<PerSocketData<SSL>*>(ws->getUserData());
-            auto& cd = clientData[sd->clientId];
+            auto sd = (PerSocketData<SSL>*) ws->getUserData();
+            auto & cd = clientData[sd->clientId];
 
             switch (type) {
-            case 1: {
-               // Custom space delimited format parsing
-               // TODO: replace with BEVE
-               std::stringstream ss(message.data() + 4);
-               while (true) {
-                  Request request;
+                case 1:
+                    {
+                        std::stringstream ss(message.data() + 4);
+                        while (true) {
+                            Request request;
 
-                  std::string path;
-                  ss >> path;
-                  if (ss.eof()) break;
-                  int requestId = 0;
-                  ss >> requestId;
-                  int nidxs = 0;
-                  ss >> nidxs;
-                  for (int i = 0; i < nidxs; ++i) {
-                     int idx = 0;
-                     ss >> idx;
-                     if (idx == -1) idx = sd->clientId;
-                     request.idxs.push_back(idx);
-                  }
+                            std::string path;
+                            ss >> path;
+                            if (ss.eof()) break;
+                            int requestId = 0;
+                            ss >> requestId;
+                            int nidxs = 0;
+                            ss >> nidxs;
+                            for (int i = 0; i < nidxs; ++i) {
+                                int idx = 0;
+                                ss >> idx;
+                                if (idx == -1) idx = sd->clientId;
+                                request.idxs.push_back(idx);
+                            }
 
-                  if (const auto it = pathToGetter.find(path); it != pathToGetter.end()) {
-                     if (print_debug) {
-                        std::printf("[incppect] requestId = %d, path = '%s', nidxs = %d\n", requestId, path.c_str(),
-                                    nidxs);
-                     }
-                     request.getterId = it->second;
+                            if (pathToGetter.find(path) != pathToGetter.end()) {
+                                //my_printf("[incppect] requestId = %d, path = '%s', nidxs = %d\n", requestId, path.c_str(), nidxs);
+                                request.getterId = pathToGetter[path];
 
-                     cd.requests[requestId] = std::move(request);
-                  }
-                  else {
-                     if (print_debug) {
-                        std::printf("[incppect] missing path '%s'\n", path.c_str());
-                     }
-                  }
-               }
-            } break;
-            case 2: {
-               const auto nRequests = (message.size() - sizeof(int32_t)) / sizeof(int32_t);
-               if (nRequests * sizeof(int32_t) + sizeof(int32_t) != message.size()) {
-                  if (print_debug) {
-                     std::printf("[incppect] error : invalid message data!\n");
-                  }
-                  return;
-               }
-               if (print_debug) {
-                  std::printf("[incppect] received requests: %d\n", int(nRequests));
-               }
+                                cd.requests[requestId] = std::move(request);
+                            } else {
+                                //my_printf("[incppect] missing path '%s'\n", path.c_str());
+                            }
+                        }
+                    }
+                    break;
+                case 2:
+                    {
+                        int nRequests = (message.size() - sizeof(int32_t))/sizeof(int32_t);
+                        if (nRequests*sizeof(int32_t) + sizeof(int32_t) != message.size()) {
+                            //my_printf("[incppect] error : invalid message data!\n");
+                            return;
+                        }
+                        //my_printf("[incppect] received requests: %d\n", nRequests);
 
-               cd.lastRequests.clear();
-               for (size_t i = 0; i < nRequests; ++i) {
-                  int32_t curRequest = -1;
-                  std::memcpy(&curRequest, message.data() + 4 * (i + 1), sizeof(curRequest));
-                  if (cd.requests.find(curRequest) != cd.requests.end()) {
-                     cd.lastRequests.push_back(curRequest);
-                     cd.requests[curRequest].tLastRequested_ms = timestamp();
-                     cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
-                  }
-               }
-            } break;
-            case 3: {
-               // update time stamps
-               for (auto curRequest : cd.lastRequests) {
-                  if (cd.requests.find(curRequest) != cd.requests.end()) {
-                     cd.requests[curRequest].tLastRequested_ms = timestamp();
-                     cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
-                  }
-               }
-            } break;
-            case 4: {
-               // Custom event
-               doUpdate = false;
-               if (handler && message.size() > sizeof(int32_t)) {
-                  handler(sd->clientId, EventType::Custom,
-                          {message.data() + sizeof(int32_t), message.size() - sizeof(int32_t)});
-               }
-            } break;
-            default:
-               if (print_debug) {
-                  std::printf("[incppect] unknown message type: %d\n", type);
-               }
+                        cd.lastRequests.clear();
+                        for (int i = 0; i < nRequests; ++i) {
+                            int32_t curRequest = -1;
+                            std::memcpy((char *)(&curRequest), message.data() + 4*(i + 1), sizeof(curRequest));
+                            if (cd.requests.find(curRequest) != cd.requests.end()) {
+                                cd.lastRequests.push_back(curRequest);
+                                cd.requests[curRequest].tLastRequested_ms = timestamp();
+                                cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
+                            }
+                        }
+                    }
+                    break;
+                case 3:
+                    {
+                        for (auto curRequest : cd.lastRequests) {
+                            if (cd.requests.find(curRequest) != cd.requests.end()) {
+                                cd.requests[curRequest].tLastRequested_ms = timestamp();
+                                cd.requests[curRequest].tLastRequestTimeout_ms = parameters.tLastRequestTimeout_ms;
+                            }
+                        }
+                    }
+                    break;
+                case 4:
+                    {
+                        doUpdate = false;
+                        if (handler && message.size() > sizeof(int32_t)) {
+                            handler(sd->clientId, EventType::Custom, { message.data() + sizeof(int32_t), message.size() - sizeof(int32_t) } );
+                        }
+                    }
+                    break;
+                default:
+                    //my_printf("[incppect] unknown message type: %d\n", type);
             };
 
             if (doUpdate) {
-               sd->mainLoop->defer([this]() { update(); });
+                sd->mainLoop->defer([this]() { this->update(); });
             }
          };
          wsBehaviour.drain = [this](auto* ws) {
